@@ -10,6 +10,7 @@ Everything is config-driven (config.yaml). No cloud IDs or secrets live in code.
 Secrets (bot tokens, webhook URLs) come from environment variables.
 
 Usage:
+  cloud_cost_collector.py init            # interactive setup -> writes config.yaml + .env
   cloud_cost_collector.py                 # daily digest
   cloud_cost_collector.py --book          # monthly: book last month's actual
   cloud_cost_collector.py --config /path/to/config.yaml
@@ -133,6 +134,10 @@ def dispatch(cfg, text, dry_run, booking):
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "init":
+        import setup_wizard
+        setup_wizard.interactive_init()
+        return
     ap = argparse.ArgumentParser(description="Cloud Cost Collector")
     ap.add_argument("--config", default=os.path.join(os.path.dirname(__file__), "config.yaml"))
     ap.add_argument("--book", action="store_true", help="book last month's actual into your books")

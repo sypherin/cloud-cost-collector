@@ -39,11 +39,23 @@ hours to first populate; the collector skips them until they exist.
 
 ## Setup
 
+The fastest path is the interactive wizard — it asks which clouds you use,
+prompts for the ids, asks where to send the digest, then writes `config.yaml`
+and `.env` for you (and runs the GCP/Azure setup steps):
+
 ```bash
-pip install -r requirements.txt          # + boto3 if you use AWS
+pip install -r requirements.txt           # + boto3 if you use AWS
+python cloud_cost_collector.py init       # answer a few questions
+set -a && source .env && set +a           # load the secrets it wrote
+python cloud_cost_collector.py --dry-run  # verify output
+```
+
+Prefer to do it by hand? The manual path still works:
+
+```bash
 cp config.example.yaml config.yaml       # edit: enable providers, add ids
 cp .env.example .env                      # add bot token / webhook url, then source it
-python setup_wizard.py                    # creates GCP datasets, prints the manual toggles
+python setup_wizard.py setup             # creates GCP datasets, prints the manual toggles
 python cloud_cost_collector.py --dry-run  # verify output
 ```
 
@@ -82,6 +94,37 @@ The webhook sink POSTs JSON like:
 Point `CCC_WEBHOOK_URL` at anything that accepts that — your own API, a no-code
 hook, or an accounting wrapper.
 
+## MCP server
+
+There's an MCP server (`mcp_server.py`) so any MCP client — Claude Desktop,
+Cursor, your own agent — can query your spend as tools instead of you opening a
+console. It reuses the same `config.yaml` and providers as the CLI.
+
+Tools exposed:
+
+| Tool | What it does |
+|------|--------------|
+| `list_providers` | which clouds are enabled and ready |
+| `get_costs(period, provider)` | spend (`mtd` or `last_month`), per-provider, with a top-service breakdown |
+| `book_last_month(dry_run)` | **write** — posts last month's actual per provider to your webhook. Defaults to `dry_run=true` |
+
+Register it in your client (stdio). Example for Claude Desktop
+(`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "cloud-cost-collector": {
+      "command": "python",
+      "args": ["/abs/path/to/cloud-cost-collector/mcp_server.py"],
+      "env": { "CCC_CONFIG": "/abs/path/to/config.yaml" }
+    }
+  }
+}
+```
+
+Needs the `mcp` package: `pip install mcp`.
+
 ## Architecture
 
 ```
@@ -90,7 +133,8 @@ providers/
   azure.py   gcp.py   aws.py   # each exposes mtd(cfg) and last_month(cfg)
 sinks/
   telegram.py   webhook.py     # send(cfg, text) / post_expense(cfg, expense)
-setup_wizard.py           # automatable setup + the unavoidable manual clicks
+setup_wizard.py           # `init` (interactive) + `setup` (datasets + manual clicks)
+mcp_server.py             # MCP server exposing costs as tools
 ```
 
 Adding a provider = drop a module in `providers/` exposing `mtd()` /
