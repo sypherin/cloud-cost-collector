@@ -1,12 +1,21 @@
 # Cloud Cost Collector
 
-Pull your cloud spend, get a digest, and **book it straight into your books** —
-across Azure, GCP, and AWS.
+**Multi-cloud cost, with no dashboard — it books itself into your accounting and
+answers to your AI agent.** Across Azure, GCP, and AWS.
 
-Most cost tools (Vantage, Infracost, OpenCost) give you yet another dashboard to
-check. This one is built around a different idea: your cloud bill should just
-show up in your accounting/CRM as recurring opex, and ping you when it spikes.
-No dashboard babysitting.
+Three things make this different from everything else in the space:
+
+- **No dashboard.** Every other cost tool (OpenCost, Infracost, Vantage,
+  Datadog) gives you yet another screen to babysit. This one doesn't. Your cloud
+  bill should just *show up where your money already lives* and ping you when it
+  spikes.
+- **It books itself.** On the 1st, it posts last month's final actual into your
+  accounting/CRM as recurring `cloud-hosting` opex — one entry per provider. No
+  other tool closes that loop; they all stop at "here's a chart."
+- **It's agent-native.** Ships with an [MCP server](#mcp-server), so Claude /
+  Cursor / your own agent can just *ask* "what's my cloud spend this month"
+  instead of you opening a console. (AWS has an official cost MCP server too —
+  but it's AWS-only. This is multi-cloud.)
 
 ## What it does
 
