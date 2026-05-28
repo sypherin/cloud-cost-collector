@@ -1,0 +1,36 @@
+# Cloud Cost Collector — example config.
+# Copy to config.yaml and fill in. NO secrets go here (tokens/URLs come from env).
+
+providers:
+  azure:
+    enabled: false
+    subscriptions:
+      - id: "<AZURE_SUBSCRIPTION_ID>"
+        label: "Production"
+
+  gcp:
+    enabled: false
+    dataset: billing_export        # dataset name the wizard creates per account
+    billing_accounts:
+      - id: "XXXXXX-XXXXXX-XXXXXX"  # billing account id (console.cloud.google.com/billing)
+        storage_project: "<GCP_PROJECT_ID>"   # where the export table is stored
+
+  aws:
+    enabled: false
+    profile: ""                    # named AWS profile, or blank for default chain
+    region: us-east-1
+
+sinks:
+  telegram:
+    enabled: false
+    token_env: CCC_TELEGRAM_TOKEN      # env var holding the bot token
+    chat_id_env: CCC_TELEGRAM_CHAT_ID  # env var holding the chat id
+
+  webhook:
+    enabled: false
+    url_env: CCC_WEBHOOK_URL           # env var holding the POST target (your CRM/accounting)
+    auth_header_env: ""                # optional env var with an Authorization header value
+    field_map: {}                      # optional: rename payload fields for your endpoint
+
+options:
+  spike_pct: 50   # day-over-day % jump that flags a ⚠️SPIKE in the digest
