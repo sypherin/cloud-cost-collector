@@ -59,6 +59,28 @@ python setup_wizard.py setup             # creates GCP datasets, prints the manu
 python cloud_cost_collector.py --dry-run  # verify output
 ```
 
+### GCP setup (the one manual step)
+
+GCP has no API to read your spend, so you enable a BigQuery billing export
+once per billing account. The wizard creates the dataset for you; the export
+toggle is the only thing you must click.
+
+1. **Find your billing account id(s).** [console.cloud.google.com/billing](https://console.cloud.google.com/billing)
+   → each account shows an id like `XXXXXX-XXXXXX-XXXXXX`. Note one project under
+   each account to store the export.
+2. **Run the wizard** (`init`) and enter each account id + storage project. It
+   runs `bq mk` to create the `billing_export` dataset in each project.
+3. **Flip the export toggle** (no API for this) — the wizard prints a deep-link
+   per account:
+   `https://console.cloud.google.com/billing/<ACCOUNT_ID>/export/bigquery`
+   → **Standard usage cost** → **Edit settings** → pick the project + the
+   `billing_export` dataset → **Save**.
+4. **Wait a few hours.** The first export table appears ~4–24h after you flip
+   the toggle. The collector skips not-yet-created tables silently, so it's safe
+   to run in the meantime.
+
+Once a table exists, `--dry-run` will show that account's spend.
+
 Then schedule it (example: systemd timers, cron, or any scheduler):
 
 - digest: daily, e.g. `cloud_cost_collector.py`
