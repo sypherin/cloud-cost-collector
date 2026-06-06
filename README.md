@@ -174,3 +174,27 @@ Adding a provider = drop a module in `providers/` exposing `mtd()` /
 ## License
 
 MIT.
+
+## Common cost leaks (field notes)
+
+Found repeatedly in real accounts — each invisible on a dashboard until you group by service:
+
+1. **GCP Artifact Registry hoarding** — every `gcloud run deploy --source` pushes a new
+   image; nothing deletes old ones. One project we audited carried **54 GB of dead build
+   images**. Fix: `scripts/gcp_artifact_registry_cleanup.sh <project>` (keep-recent-N +
+   delete-older-than policies on every repo).
+2. **Azure Container Registry Basic base fee** — Basic tier bills ~US$5/mo *per registry*
+   regardless of contents. Two forgotten registries = $10/mo for nothing. Image cleanup
+   doesn't help; remove unused registries instead.
+3. **Always-on Container Apps** — `minReplicas: 1` keeps a forgotten experiment billing
+   24/7. Check `az containerapp list` for apps nobody remembers; look at `createdAt`.
+4. **Foundry/OpenAI quickstart accounts** — Azure AI Foundry tutorials create `hello-*`
+   accounts with live model deployments in random regions. Per-token SKUs cost nothing
+   idle, but they're a usage hazard; remove the deployments.
+5. **Firestore bills under the "App Engine" service label** in billing exports — if you
+   killed Firestore and still see App Engine charges, split by SKU before panicking:
+   it's usually pre-kill residue inside your query window.
+6. **Wrong-tenant tokens (multi-tenant Azure)** — a generic token from the CLI default
+   tenant 401s (InvalidAuthenticationTokenTenant) against subscriptions in other
+   tenants. This collector already scopes tokens per-subscription
+   (providers/azure.py); if you script your own queries, do the same.
